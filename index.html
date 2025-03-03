@@ -65,8 +65,7 @@
         a {
             color: lime;
             text-decoration: none;
-            display: block;
-            margin-bottom: 3px;
+            margin-right: 10px;
         }
         a:hover {
             text-decoration: underline;
@@ -147,15 +146,17 @@
 
                 case "ls":
                     let currentFolder = getCurrentFolder();
-                    response = "<p>";
+                    let filesAndFolders = [];
+
                     for (let item in currentFolder) {
                         if (typeof currentFolder[item] === "string") {
-                            response += `<a href="#" onclick="editFile('${item}')">${item}</a><br>`;
+                            filesAndFolders.push(`<a href="#" onclick="editFile('${item}')">${item}</a>`);
                         } else {
-                            response += `<span style="color: cyan;">${item}/</span><br>`;
+                            filesAndFolders.push(`<span style="color: cyan;">${item}/</span>`);
                         }
                     }
-                    response += "</p>";
+
+                    response = `<p>${filesAndFolders.join(" ")}</p>`; // Output senza righe vuote
                     break;
 
                 case "mkdir":
@@ -224,7 +225,7 @@
             }
 
             let newOutput = document.createElement("div");
-            newOutput.innerHTML = commandLine + response + "<br>"; // Aggiunge spazio tra i comandi
+            newOutput.innerHTML = commandLine + response + "<hr style='border: none; height: 5px;'>"; // Spazio tra comandi
             outputDiv.appendChild(newOutput);
             scrollToBottom();
         }
