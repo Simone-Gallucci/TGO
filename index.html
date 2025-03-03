@@ -65,6 +65,7 @@
         a {
             color: lime;
             text-decoration: none;
+            margin-right: 10px;
         }
         a:hover {
             text-decoration: underline;
@@ -115,18 +116,16 @@
                     response = `<p>Comandi disponibili:<br>
                                 - help: Mostra questo messaggio<br>
                                 - clear: Pulisce lo schermo<br>
-                                - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
+                                - ls: Mostra l'elenco di file e cartelle (cliccabili in fila)<br>
                                 - echo [testo]: Stampa il testo</p>`;
                     break;
                 case "clear":
                     outputDiv.innerHTML = "";
                     return;
                 case "ls":
-                    response = "<p>";
-                    files.forEach(file => {
-                        response += `<a href="${file.url}" target="_blank">${file.name}</a>  `;
-                    });
-                    response += "</p>";
+                    response = "<p>" + files.map(file => 
+                        `<a href="${file.url}" target="_blank">${file.name}</a>`
+                    ).join(" ") + "</p>";
                     break;
                 default:
                     if (input.startsWith("echo ")) {
