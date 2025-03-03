@@ -24,17 +24,18 @@
         #terminal {
             width: 100%;
             height: 100%;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            padding: 10px;
-            border: none;
-            background-color: black;
             display: flex;
             flex-direction: column;
+            background-color: black;
+            padding: 10px;
+            overflow: hidden;
         }
-        #output {
+        #output-container {
             flex-grow: 1;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
         }
         #input-line {
             display: flex;
@@ -60,8 +61,10 @@
 </head>
 <body>
     <div id="terminal">
-        <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
-        <div id="output"></div>
+        <div id="output-container">
+            <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
+            <div id="output"></div>
+        </div>
         <div id="input-line">
             <span id="prompt">user@terminal:~$</span>
             <input type="text" id="cmd" autofocus autocomplete="off">
@@ -91,42 +94,39 @@
 
         function executeCommand(input) {
             let outputDiv = document.getElementById("output");
-            outputDiv.innerHTML += `<p><span style="color: lime;">user@terminal:~$</span> ${input}</p>`;
+            let commandLine = `<p><span style="color: lime;">user@terminal:~$</span> ${input}</p>`;
 
+            let response = "";
             switch (input.toLowerCase()) {
                 case "help":
-                    outputDiv.innerHTML += `<p>Comandi disponibili:<br>
-                                            - help: Mostra questo messaggio<br>
-                                            - clear: Pulisce lo schermo<br>
-                                            - ls: Mostra l'elenco di file e cartelle<br>
-                                            - echo [testo]: Stampa il testo</p>`;
+                    response = `<p>Comandi disponibili:<br>
+                                - help: Mostra questo messaggio<br>
+                                - clear: Pulisce lo schermo<br>
+                                - ls: Mostra l'elenco di file e cartelle<br>
+                                - echo [testo]: Stampa il testo</p>`;
                     break;
                 case "clear":
                     outputDiv.innerHTML = "";
-                    break;
+                    return; // Non aggiungere altro dopo "clear"
                 case "ls":
-                    outputDiv.innerHTML += `<p>${files.join("  ")}</p>`;
+                    response = `<p>${files.join("  ")}</p>`;
                     break;
                 default:
                     if (input.startsWith("echo ")) {
-                        outputDiv.innerHTML += `<p>${input.substring(5)}</p>`;
+                        response = `<p>${input.substring(5)}</p>`;
                     } else {
-                        outputDiv.innerHTML += `<p>Comando non riconosciuto: ${input}</p>`;
+                        response = `<p>Comando non riconosciuto: ${input}</p>`;
                     }
             }
 
+            outputDiv.innerHTML += commandLine + response;
             scrollToBottom();
         }
 
         function scrollToBottom() {
+            let outputContainer = document.getElementById("output-container");
             requestAnimationFrame(() => {
-                let terminal = document.getElementById("terminal");
-                terminal.scrollTo({ top: terminal.scrollHeight, behavior: "smooth" });
-
-                // Soluzione extra per dispositivi mobili con problemi di scorrimento
-                setTimeout(() => {
-                    terminal.scrollTo({ top: terminal.scrollHeight, behavior: "smooth" });
-                }, 200);
+                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
             });
         }
     </script>
