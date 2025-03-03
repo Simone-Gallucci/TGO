@@ -79,7 +79,7 @@
             <div id="output"></div>
         </div>
         <div id="input-line">
-            <span id="prompt">TGO@terminal:~$</span>
+            <span id="prompt">TGO@terminal:/</span>
             <input type="text" id="cmd" autofocus autocomplete="off">
         </div>
     </div>
@@ -103,6 +103,10 @@
                 folder = folder[currentPath[i]];
             }
             return folder;
+        }
+
+        function updatePrompt() {
+            document.getElementById("prompt").innerText = `TGO@terminal:${currentPath.join("/")}$`;
         }
 
         const inputField = document.getElementById("cmd");
@@ -172,6 +176,7 @@
                         if (currentPath.length > 1) {
                             currentPath.pop();
                             response = `<p>Spostato nella cartella superiore.</p>`;
+                            updatePrompt();
                         } else {
                             response = `<p>Errore: Sei già nella cartella root.</p>`;
                         }
@@ -181,6 +186,7 @@
                         if (folder[folderName] && typeof folder[folderName] === "object") {
                             currentPath.push(folderName);
                             response = `<p>Entrato nella cartella '${folderName}'.</p>`;
+                            updatePrompt();
                         } else {
                             response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
                         }
