@@ -34,7 +34,7 @@
             flex-grow: 1;
             overflow-y: auto;
             display: flex;
-            flex-direction: column;
+            flex-direction: column-reverse; /* Ultimi comandi sempre sopra */
             justify-content: flex-start;
         }
         #input-line {
@@ -67,7 +67,6 @@
 <body>
     <div id="terminal">
         <div id="output-container">
-            <p>Simulazione Terminale <br> Digita "help" per i comandi disponibili</p>
             <div id="output"></div>
         </div>
         <div id="input-line">
@@ -114,7 +113,6 @@
                     break;
                 case "clear":
                     outputDiv.innerHTML = "";
-                    scrollToBottom();
                     return;
                 case "ls":
                     response = `<p>${files.join("  ")}</p>`;
@@ -127,18 +125,17 @@
                     }
             }
 
-            outputDiv.innerHTML += commandLine + response;
+            let newOutput = document.createElement("div");
+            newOutput.innerHTML = commandLine + response;
+            outputDiv.prepend(newOutput); // Aggiunge il nuovo output in cima
+
             scrollToBottom();
         }
 
         function scrollToBottom() {
             requestAnimationFrame(() => {
-                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
+                outputContainer.scrollTo({ top: 0, behavior: "smooth" });
             });
-
-            setTimeout(() => {
-                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
-            }, 100);
         }
 
         // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
@@ -148,18 +145,9 @@
             scrollToBottom();
         });
 
-        // Rileva cambiamenti nell'output e forza lo scroll automatico
-        const observer = new MutationObserver(scrollToBottom);
-        observer.observe(outputDiv, { childList: true });
-
         // Forza il focus sull'input quando si clicca nel terminale
         document.getElementById("terminal").addEventListener("click", () => {
             inputField.focus();
-        });
-
-        // Forza lo scroll quando l'utente interagisce con dispositivi touch
-        outputContainer.addEventListener("touchmove", () => {
-            scrollToBottom();
         });
 
     </script>
