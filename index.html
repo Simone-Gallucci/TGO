@@ -62,6 +62,13 @@
             min-width: 50px;
             text-transform: lowercase;
         }
+        a {
+            color: lime;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -76,52 +83,84 @@
     </div>
 
     <script>
-    const files = [
-        { name: "documento.txt", url: "https://tuosito.com/documento.txt" },
-        { name: "foto.jpg", url: "https://tuosito.com/foto.jpg" },
-        { name: "script.py", url: "https://tuosito.com/script.py" },
-        { name: "progetto/", url: "https://tuosito.com/progetto/" },
-        { name: "app.js", url: "https://tuosito.com/app.js" },
-        { name: "index.html", url: "https://tuosito.com/index.html" },
-        { name: "stile.css", url: "https://tuosito.com/stile.css" }
-    ];
+        const files = [
+            { name: "documento.txt", url: "https://tuosito.com/documento.txt" },
+            { name: "foto.jpg", url: "https://tuosito.com/foto.jpg" },
+            { name: "script.py", url: "https://tuosito.com/script.py" },
+            { name: "progetto/", url: "https://tuosito.com/progetto/" },
+            { name: "app.js", url: "https://tuosito.com/app.js" },
+            { name: "index.html", url: "https://tuosito.com/index.html" },
+            { name: "stile.css", url: "https://tuosito.com/stile.css" }
+        ];
 
-    function executeCommand(input) {
-        let commandLine = `<p><span style="color: lime;">TGO@terminal:~$</span> ${input}</p>`;
-        let response = "";
+        const inputField = document.getElementById("cmd");
+        const outputDiv = document.getElementById("output");
+        const outputContainer = document.getElementById("output-container");
 
-        switch (input) {
-            case "help":
-                response = `<p>Comandi disponibili:<br>
-                            - help: Mostra questo messaggio<br>
-                            - clear: Pulisce lo schermo<br>
-                            - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
-                            - echo [testo]: Stampa il testo</p>`;
-                break;
-            case "clear":
-                outputDiv.innerHTML = "";
-                return;
-            case "ls":
-                response = "<p>";
-                files.forEach(file => {
-                    response += `<a href="${file.url}" target="_blank" style="color: lime; text-decoration: none;">${file.name}</a>  `;
-                });
-                response += "</p>";
-                break;
-            default:
-                if (input.startsWith("echo ")) {
-                    response = `<p>${input.substring(5)}</p>`;
-                } else {
-                    response = `<p>Comando non riconosciuto: ${input}</p>`;
-                }
+        inputField.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                let input = this.value.trim().toLowerCase();
+                this.value = "";
+                executeCommand(input);
+            }
+        });
+
+        function executeCommand(input) {
+            let commandLine = `<p><span style="color: lime;">TGO@terminal:~$</span> ${input}</p>`;
+            let response = "";
+
+            switch (input) {
+                case "help":
+                    response = `<p>Comandi disponibili:<br>
+                                - help: Mostra questo messaggio<br>
+                                - clear: Pulisce lo schermo<br>
+                                - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
+                                - echo [testo]: Stampa il testo</p>`;
+                    break;
+                case "clear":
+                    outputDiv.innerHTML = "";
+                    return;
+                case "ls":
+                    response = "<p>";
+                    files.forEach(file => {
+                        response += `<a href="${file.url}" target="_blank">${file.name}</a>  `;
+                    });
+                    response += "</p>";
+                    break;
+                default:
+                    if (input.startsWith("echo ")) {
+                        response = `<p>${input.substring(5)}</p>`;
+                    } else {
+                        response = `<p>Comando non riconosciuto: ${input}</p>`;
+                    }
+            }
+
+            let newOutput = document.createElement("div");
+            newOutput.innerHTML = commandLine + response;
+            outputDiv.appendChild(newOutput);
+
+            scrollToBottom();
         }
 
-        let newOutput = document.createElement("div");
-        newOutput.innerHTML = commandLine + response;
-        outputDiv.appendChild(newOutput);
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
+            });
+        }
 
-        scrollToBottom();
-    }
+        // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
+        window.addEventListener("resize", () => {
+            let terminal = document.getElementById("terminal");
+            terminal.style.height = `${window.innerHeight}px`; 
+            scrollToBottom();
+        });
+
+        // Forza il focus sull'input quando si clicca nel terminale
+        document.getElementById("terminal").addEventListener("click", () => {
+            inputField.focus();
+        });
+
     </script>
 </body>
 </html>
