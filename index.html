@@ -35,12 +35,16 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
         #input-line {
             display: flex;
             align-items: center;
             padding: 5px;
+            background-color: black;
+            position: sticky;
+            bottom: 0;
+            width: 100%;
         }
         #prompt {
             color: lime;
@@ -63,7 +67,7 @@
 <body>
     <div id="terminal">
         <div id="output-container">
-            <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
+            <p>Simulazione Terminale <br> Digita "help" per i comandi disponibili</p>
             <div id="output"></div>
         </div>
         <div id="input-line">
@@ -132,7 +136,6 @@
                 outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
             });
 
-            // Backup per garantire lo scroll su mobile
             setTimeout(() => {
                 outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
             }, 100);
@@ -154,10 +157,11 @@
             inputField.focus();
         });
 
-        // Assicura lo scroll quando l'utente interagisce su dispositivi touch
+        // Forza lo scroll quando l'utente interagisce con dispositivi touch
         outputContainer.addEventListener("touchmove", () => {
             scrollToBottom();
         });
+
     </script>
 </body>
 </html>
