@@ -65,7 +65,7 @@
         a {
             color: lime;
             text-decoration: none;
-            display: block; /* Forza la visualizzazione uno sotto l'altro */
+            display: block;
             margin-bottom: 3px;
         }
         a:hover {
@@ -85,15 +85,25 @@
     </div>
 
     <script>
-        const files = [
-            { name: "documento.txt", url: "https://tuosito.com/documento.txt" },
-            { name: "foto.jpg", url: "https://tuosito.com/foto.jpg" },
-            { name: "script.py", url: "https://tuosito.com/script.py" },
-            { name: "progetto/", url: "https://tuosito.com/progetto/" },
-            { name: "app.js", url: "https://tuosito.com/app.js" },
-            { name: "index.html", url: "https://tuosito.com/index.html" },
-            { name: "stile.css", url: "https://tuosito.com/stile.css" }
-        ];
+        let fileSystem = {
+            "documento.txt": "https://tuosito.com/documento.txt",
+            "foto.jpg": "https://tuosito.com/foto.jpg",
+            "script.py": "https://tuosito.com/script.py",
+            "app.js": "https://tuosito.com/app.js",
+            "index.html": "https://tuosito.com/index.html",
+            "stile.css": "https://tuosito.com/stile.css",
+            "progetto": {} // Cartella vuota
+        };
+
+        let currentPath = ["/"];
+
+        function getCurrentFolder() {
+            let folder = fileSystem;
+            for (let i = 1; i < currentPath.length; i++) {
+                folder = folder[currentPath[i]];
+            }
+            return folder;
+        }
 
         const inputField = document.getElementById("cmd");
         const outputDiv = document.getElementById("output");
@@ -109,37 +119,87 @@
         });
 
         function executeCommand(input) {
-            let commandLine = `<p><span style="color: lime;">TGO@terminal:~$</span> ${input}</p>`;
+            let commandLine = `<p><span style="color: lime;">TGO@terminal:${currentPath.join("/")}$</span> ${input}</p>`;
             let response = "";
+            let args = input.split(" ");
 
-            switch (input) {
+            switch (args[0]) {
                 case "help":
                     response = `<p>Comandi disponibili:<br>
                                 - help: Mostra questo messaggio<br>
                                 - clear: Pulisce lo schermo<br>
-                                - ls: Mostra l'elenco di file e cartelle (uno sotto l'altro)<br>
+                                - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
+                                - mkdir [nome]: Crea una nuova cartella<br>
+                                - cd [nome]: Entra in una cartella<br>
+                                - cd ..: Torna alla cartella superiore<br>
                                 - echo [testo]: Stampa il testo</p>`;
                     break;
+
                 case "clear":
                     outputDiv.innerHTML = "";
                     return;
+
                 case "ls":
-                    response = "<p>" + files.map(file => 
-                        `<a href="${file.url}" target="_blank">${file.name}</a>`
-                    ).join("<br>") + "</p>"; // <br> forza la visualizzazione in elenco verticale
-                    break;
-                default:
-                    if (input.startsWith("echo ")) {
-                        response = `<p>${input.substring(5)}</p>`;
-                    } else {
-                        response = `<p>Comando non riconosciuto: ${input}</p>`;
+                    let currentFolder = getCurrentFolder();
+                    response = "<p>";
+                    for (let item in currentFolder) {
+                        if (typeof currentFolder[item] === "string") {
+                            response += `<a href="${currentFolder[item]}" target="_blank">${item}</a><br>`;
+                        } else {
+                            response += `<span style="color: cyan;">${item}/</span><br>`;
+                        }
                     }
+                    response += "</p>";
+                    break;
+
+                case "mkdir":
+                    if (args[1]) {
+                        let folderName = args[1];
+                        let folder = getCurrentFolder();
+                        if (!folder[folderName]) {
+                            folder[folderName] = {};
+                            response = `<p>Cartella '${folderName}' creata con successo.</p>`;
+                        } else {
+                            response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
+                        }
+                    } else {
+                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
+                    }
+                    break;
+
+                case "cd":
+                    if (args[1] === "..") {
+                        if (currentPath.length > 1) {
+                            currentPath.pop();
+                            response = `<p>Spostato nella cartella superiore.</p>`;
+                        } else {
+                            response = `<p>Errore: Sei già nella cartella root.</p>`;
+                        }
+                    } else if (args[1]) {
+                        let folderName = args[1];
+                        let folder = getCurrentFolder();
+                        if (folder[folderName] && typeof folder[folderName] === "object") {
+                            currentPath.push(folderName);
+                            response = `<p>Entrato nella cartella '${folderName}'.</p>`;
+                        } else {
+                            response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
+                        }
+                    } else {
+                        response = "<p>Errore: Specifica una cartella.</p>";
+                    }
+                    break;
+
+                case "echo":
+                    response = `<p>${input.substring(5)}</p>`;
+                    break;
+
+                default:
+                    response = `<p>Comando non riconosciuto: ${input}</p>`;
             }
 
             let newOutput = document.createElement("div");
             newOutput.innerHTML = commandLine + response;
             outputDiv.appendChild(newOutput);
-
             scrollToBottom();
         }
 
@@ -149,14 +209,12 @@
             });
         }
 
-        // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
         window.addEventListener("resize", () => {
             let terminal = document.getElementById("terminal");
             terminal.style.height = `${window.innerHeight}px`; 
             scrollToBottom();
         });
 
-        // Forza il focus sull'input quando si clicca nel terminale
         document.getElementById("terminal").addEventListener("click", () => {
             inputField.focus();
         });
