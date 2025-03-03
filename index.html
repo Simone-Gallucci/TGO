@@ -63,11 +63,11 @@
 <body>
     <div id="terminal">
         <div id="output-container">
-            <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
+            <p>Simulazione Terminale <br> Digita "help" per i comandi disponibili</p>
             <div id="output"></div>
         </div>
         <div id="input-line">
-            <span id="prompt">user@terminal:~$</span>
+            <span id="prompt">TGO@terminal:~$</span>
             <input type="text" id="cmd" autofocus autocomplete="off">
         </div>
     </div>
@@ -97,7 +97,7 @@
         });
 
         function executeCommand(input) {
-            let commandLine = `<p><span style="color: lime;">user@terminal:~$</span> ${input}</p>`;
+            let commandLine = `<p><span style="color: lime;"> TGO@terminal:~$</span> ${input}</p>`;
             let response = "";
 
             switch (input) {
