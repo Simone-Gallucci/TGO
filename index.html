@@ -185,17 +185,44 @@
 
                 case "ls":
                     let currentFolder = getCurrentFolder();
-                    let filesAndFolders = [];
+                    let filesAndFolders = Object.keys(currentFolder)
+                        .map(item => (typeof currentFolder[item] === "string" ? 
+                            `<a href="#" onclick="openEditor('${item}')">${item}</a>` : 
+                            `<span style="color: cyan;">${item}/</span>`))
+                        .join(" ");
+                    response = `<p>${filesAndFolders}</p>`;
+                    break;
 
-                    for (let item in currentFolder) {
-                        if (typeof currentFolder[item] === "string") {
-                            filesAndFolders.push(`<a href="#" onclick="openEditor('${item}')">${item}</a>`);
+                case "mkdir":
+                    if (args.length < 2) {
+                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
+                    } else {
+                        let folderName = args[1].trim();
+                        let folder = getCurrentFolder();
+                        if (!folder[folderName]) {
+                            folder[folderName] = {};
+                            saveFileSystem();
+                            response = `<p>Cartella '${folderName}' creata con successo.</p>`;
                         } else {
-                            filesAndFolders.push(`<span style="color: cyan;">${item}/</span>`);
+                            response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
                         }
                     }
+                    break;
 
-                    response = `<p>${filesAndFolders.join(" ")}</p>`;
+                case "rm":
+                    if (args.length < 2) {
+                        response = "<p>Errore: Specifica il nome di un file o cartella da eliminare.</p>";
+                    } else {
+                        let itemName = args[1].trim();
+                        let folder = getCurrentFolder();
+                        if (folder[itemName] !== undefined) {
+                            delete folder[itemName];
+                            saveFileSystem();
+                            response = `<p>'${itemName}' eliminato con successo.</p>`;
+                        } else {
+                            response = `<p>Errore: '${itemName}' non esiste.</p>`;
+                        }
+                    }
                     break;
 
                 case "nano":
@@ -213,22 +240,6 @@
                             folder[fileName] = "";
                             saveFileSystem();
                             response = `<p>File '${fileName}' creato.</p>`;
-                        } else {
-                            response = `<p>Errore: Il file '${fileName}' esiste già.</p>`;
-                        }
-                    }
-                    break;
-
-                case "rm":
-                    if (args[1]) {
-                        let fileName = args[1];
-                        let folder = getCurrentFolder();
-                        if (folder[fileName] !== undefined) {
-                            delete folder[fileName];
-                            saveFileSystem();
-                            response = `<p>'${fileName}' eliminato.</p>`;
-                        } else {
-                            response = `<p>Errore: '${fileName}' non esiste.</p>`;
                         }
                     }
                     break;
@@ -241,26 +252,8 @@
                     response = `<p>Comando non riconosciuto: ${input}</p>`;
             }
 
-            let newOutput = document.createElement("div");
-            newOutput.innerHTML = commandLine + response + "<hr style='border: none; height: 5px;'>";
-            outputDiv.appendChild(newOutput);
+            outputDiv.innerHTML += commandLine + response + "<hr>";
             scrollToBottom();
-        }
-
-        function openEditor(fileName) {
-            let folder = getCurrentFolder();
-            if (folder[fileName] !== undefined) {
-                currentEditingFile = fileName;
-                document.getElementById("editor-title").innerText = `Modifica: ${fileName}`;
-                document.getElementById("editor-content").value = folder[fileName];
-                document.getElementById("terminal").style.display = "none";
-                document.getElementById("editor").style.display = "block";
-            }
-        }
-
-        function closeEditor() {
-            document.getElementById("editor").style.display = "none";
-            document.getElementById("terminal").style.display = "flex";
         }
 
         function scrollToBottom() {
