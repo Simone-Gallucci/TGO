@@ -160,7 +160,7 @@
                     let currentFolder = getCurrentFolder();
                     let filesAndFolders = Object.keys(currentFolder)
                         .map(item => (typeof currentFolder[item] === "string" ? 
-                            `<a href="#" onclick="openEditor('${item}')">${item}</a>` : 
+                            `<a href="#">${item}</a>` : 
                             `<span style="color: cyan;">${item}/</span>`))
                         .join(" ");
                     response = `<p>${filesAndFolders}</p>`;
@@ -178,6 +178,22 @@
                             response = `<p>Cartella '${folderName}' creata con successo.</p>`;
                         } else {
                             response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
+                        }
+                    }
+                    break;
+
+                case "rm":
+                    if (args.length < 2) {
+                        response = "<p>Errore: Specifica il nome di un file o cartella da eliminare.</p>";
+                    } else {
+                        let itemName = args[1].trim();
+                        let folder = getCurrentFolder();
+                        if (folder[itemName] !== undefined) {
+                            delete folder[itemName];
+                            saveFileSystem();
+                            response = `<p>'${itemName}' eliminato con successo.</p>`;
+                        } else {
+                            response = `<p>Errore: '${itemName}' non esiste.</p>`;
                         }
                     }
                     break;
