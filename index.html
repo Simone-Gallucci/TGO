@@ -62,7 +62,7 @@
 </head>
 <body>
     <div id="terminal">
-        <div id="output-container" id="output-container">
+        <div id="output-container">
             <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
             <div id="output"></div>
         </div>
@@ -73,7 +73,6 @@
     </div>
 
     <script>
-        // Lista di file e cartelle fittizie
         const files = [
             "documento.txt",
             "foto.jpg",
@@ -91,14 +90,14 @@
         inputField.addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                let input = this.value.trim().toLowerCase(); // Converti in minuscolo
+                let input = this.value.trim().toLowerCase();
                 this.value = "";
                 executeCommand(input);
             }
         });
 
         function executeCommand(input) {
-            let commandLine = `<p><span style="color: lime;">TGO@terminal:~$</span> ${input}</p>`;
+            let commandLine = `<p><span style="color: lime;">user@terminal:~$</span> ${input}</p>`;
             let response = "";
 
             switch (input) {
@@ -112,7 +111,7 @@
                 case "clear":
                     outputDiv.innerHTML = "";
                     scrollToBottom();
-                    return; // Non aggiungere altro dopo "clear"
+                    return;
                 case "ls":
                     response = `<p>${files.join("  ")}</p>`;
                     break;
@@ -134,12 +133,17 @@
             }, 100);
         }
 
-        // Aggiunge un listener per ridimensionare il terminale quando la tastiera è aperta su mobile
+        // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
         window.addEventListener("resize", () => {
             let terminal = document.getElementById("terminal");
-            terminal.style.height = `${window.innerHeight}px`; // Ridimensiona il terminale dinamicamente
+            terminal.style.height = `${window.innerHeight}px`; // Forza il ridimensionamento
+            scrollToBottom();
         });
 
+        // Forza il focus sul campo input quando si clicca nel terminale
+        document.getElementById("terminal").addEventListener("click", () => {
+            inputField.focus();
+        });
     </script>
 </body>
 </html>
