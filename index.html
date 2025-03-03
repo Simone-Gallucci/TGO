@@ -81,25 +81,15 @@
         <div id="input-line">
             <span id="prompt">TGO@terminal:/</span>
             <input type="text" id="cmd" autofocus autocomplete="off">
-            <br>
         </div>
     </div>
 
     <script>
-        // 🔥 Funzione per caricare il filesystem da localStorage
         function loadFileSystem() {
             let savedData = localStorage.getItem("fileSystem");
-            return savedData ? JSON.parse(savedData) : {
-                "documento.txt": "https://tuosito.com/documento.txt",
-                "foto.jpg": "https://tuosito.com/foto.jpg",
-                "script.py": "https://tuosito.com/script.py",
-                "app.js": "https://tuosito.com/app.js",
-                "index.html": "https://tuosito.com/index.html",
-                "stile.css": "https://tuosito.com/stile.css"
-            };
+            return savedData ? JSON.parse(savedData) : {};
         }
 
-        // 🔥 Funzione per salvare il filesystem in localStorage
         function saveFileSystem() {
             localStorage.setItem("fileSystem", JSON.stringify(fileSystem));
         }
@@ -126,7 +116,7 @@
         inputField.addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
-                let input = this.value.trim().toLowerCase();
+                let input = this.value.trim();
                 this.value = "";
                 executeCommand(input);
             }
@@ -142,10 +132,12 @@
                     response = `<p>Comandi disponibili:<br>
                                 - help: Mostra questo messaggio<br>
                                 - clear: Pulisce lo schermo<br>
-                                - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
-                                - mkdir [nome]: Crea una nuova cartella (SALVATA PERMANENTEMENTE!)<br>
-                                - cd [nome]: Entra in una cartella<br>
-                                - cd ..: Torna alla cartella superiore<br>
+                                - ls: Mostra file e cartelle (cliccabili)<br>
+                                - mkdir [cartella]: Crea una cartella<br>
+                                - cd [cartella]: Entra in una cartella<br>
+                                - cd ..: Torna indietro<br>
+                                - touch [file.txt]: Crea un file di testo<br>
+                                - nano [file.txt]: Modifica un file di testo<br>
                                 - echo [testo]: Stampa il testo</p>`;
                     break;
 
@@ -158,7 +150,7 @@
                     response = "<p>";
                     for (let item in currentFolder) {
                         if (typeof currentFolder[item] === "string") {
-                            response += `<a href="${currentFolder[item]}" target="_blank">${item}</a><br>`;
+                            response += `<a href="#" onclick="editFile('${item}')">${item}</a><br>`;
                         } else {
                             response += `<span style="color: cyan;">${item}/</span><br>`;
                         }
@@ -173,12 +165,12 @@
                         if (!folder[folderName]) {
                             folder[folderName] = {};
                             saveFileSystem();
-                            response = `<p>Cartella '${folderName}' creata con successo.</p>`;
+                            response = `<p>Cartella '${folderName}' creata.</p>`;
                         } else {
                             response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
                         }
                     } else {
-                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
+                        response = "<p>Errore: Specifica un nome.</p>";
                     }
                     break;
 
@@ -186,23 +178,40 @@
                     if (args[1] === "..") {
                         if (currentPath.length > 1) {
                             currentPath.pop();
-                            response = `<p>Spostato nella cartella superiore.</p>`;
+                            response = `<p>Sei tornato indietro.</p>`;
                             updatePrompt();
-                        } else {
-                            response = `<p>Errore: Sei già nella cartella root.</p>`;
                         }
                     } else if (args[1]) {
                         let folderName = args[1];
                         let folder = getCurrentFolder();
                         if (folder[folderName] && typeof folder[folderName] === "object") {
                             currentPath.push(folderName);
-                            response = `<p>Entrato nella cartella '${folderName}'.</p>`;
+                            response = `<p>Entrato in '${folderName}'.</p>`;
                             updatePrompt();
                         } else {
                             response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
                         }
-                    } else {
-                        response = "<p>Errore: Specifica una cartella.</p>";
+                    }
+                    break;
+
+                case "touch":
+                    if (args[1]) {
+                        let fileName = args[1];
+                        let folder = getCurrentFolder();
+                        if (!folder[fileName]) {
+                            folder[fileName] = "";
+                            saveFileSystem();
+                            response = `<p>File '${fileName}' creato.</p>`;
+                        } else {
+                            response = `<p>Errore: Il file '${fileName}' esiste già.</p>`;
+                        }
+                    }
+                    break;
+
+                case "nano":
+                    if (args[1]) {
+                        editFile(args[1]);
+                        return;
                     }
                     break;
 
@@ -215,9 +224,21 @@
             }
 
             let newOutput = document.createElement("div");
-            newOutput.innerHTML = commandLine + response;
+            newOutput.innerHTML = commandLine + response + "<br>"; // Aggiunge spazio tra i comandi
             outputDiv.appendChild(newOutput);
             scrollToBottom();
+        }
+
+        function editFile(fileName) {
+            let folder = getCurrentFolder();
+            if (folder[fileName] !== undefined) {
+                let content = folder[fileName];
+                let editor = prompt(`Modifica ${fileName}:`, content);
+                if (editor !== null) {
+                    folder[fileName] = editor;
+                    saveFileSystem();
+                }
+            }
         }
 
         function scrollToBottom() {
