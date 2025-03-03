@@ -79,36 +79,6 @@
         a:hover {
             text-decoration: underline;
         }
-        #editor {
-            display: none;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            color: lime;
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 20px;
-        }
-        textarea {
-            width: 100%;
-            height: 80%;
-            background: black;
-            color: lime;
-            font-family: monospace;
-            border: none;
-            padding: 5px;
-            resize: none;
-        }
-        button {
-            background: lime;
-            color: black;
-            font-family: monospace;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -168,26 +138,32 @@
             let args = input.split(" ");
 
             switch (args[0]) {
-                case "cd":
-                    if (args.length < 2) {
-                        response = "<p>Errore: Specifica una cartella.</p>";
-                    } else if (args[1] === "..") {
-                        if (currentPath.length > 1) {
-                            currentPath.pop();
-                            response = `<p>Spostato alla cartella superiore.</p>`;
-                            updatePrompt();
-                        }
-                    } else {
-                        let folderName = args[1];
-                        let folder = getCurrentFolder();
-                        if (folder[folderName] && typeof folder[folderName] === "object") {
-                            currentPath.push(folderName);
-                            response = `<p>Entrato in '${folderName}'.</p>`;
-                            updatePrompt();
-                        } else {
-                            response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
-                        }
-                    }
+                case "help":
+                    response = `<p>Comandi disponibili:<br>
+                                - help: Mostra questo messaggio<br>
+                                - clear: Pulisce lo schermo<br>
+                                - ls: Mostra file e cartelle<br>
+                                - mkdir [cartella]: Crea una cartella<br>
+                                - cd [cartella]: Entra in una cartella<br>
+                                - cd ..: Torna indietro<br>
+                                - touch [file.txt]: Crea un file di testo<br>
+                                - nano [file.txt]: Modifica un file di testo<br>
+                                - rm [file/cartella]: Elimina file o cartella<br>
+                                - echo [testo]: Stampa il testo</p>`;
+                    break;
+
+                case "clear":
+                    outputDiv.innerHTML = "";
+                    return;
+
+                case "ls":
+                    let currentFolder = getCurrentFolder();
+                    let filesAndFolders = Object.keys(currentFolder)
+                        .map(item => (typeof currentFolder[item] === "string" ? 
+                            `<a href="#" onclick="openEditor('${item}')">${item}</a>` : 
+                            `<span style="color: cyan;">${item}/</span>`))
+                        .join(" ");
+                    response = `<p>${filesAndFolders}</p>`;
                     break;
 
                 case "mkdir":
@@ -204,16 +180,6 @@
                             response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
                         }
                     }
-                    break;
-
-                case "ls":
-                    let currentFolder = getCurrentFolder();
-                    let filesAndFolders = Object.keys(currentFolder)
-                        .map(item => (typeof currentFolder[item] === "string" ? 
-                            `<a href="#" onclick="openEditor('${item}')">${item}</a>` : 
-                            `<span style="color: cyan;">${item}/</span>`))
-                        .join(" ");
-                    response = `<p>${filesAndFolders}</p>`;
                     break;
 
                 case "echo":
