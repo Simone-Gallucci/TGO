@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminale Simulato</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: black;
+            color: lime;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        #terminal {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            padding: 10px;
+            border: none;
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+        }
+        #output {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        #input-line {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+        }
+        #prompt {
+            color: lime;
+            flex-shrink: 0;
+            margin-right: 5px;
+        }
+        #cmd {
+            background: transparent;
+            border: none;
+            color: lime;
+            font-family: monospace;
+            font-size: 16px;
+            flex-grow: 1;
+            outline: none;
+            min-width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal">
+        <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
+        <div id="output"></div>
+        <div id="input-line">
+            <span id="prompt">user@terminal:~$</span>
+            <input type="text" id="cmd" autofocus autocomplete="off">
+        </div>
+    </div>
+
+    <script>
+        // Lista di file e cartelle fittizie
+        const files = [
+            "documento.txt",
+            "foto.jpg",
+            "script.py",
+            "progetto/",
+            "app.js",
+            "index.html",
+            "stile.css"
+        ];
+
+        document.getElementById("cmd").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                let input = this.value.trim();
+                this.value = "";
+                executeCommand(input);
+            }
+        });
+
+        function executeCommand(input) {
+            let outputDiv = document.getElementById("output");
+            outputDiv.innerHTML += `<p><span style="color: lime;">user@terminal:~$</span> ${input}</p>`;
+
+            switch (input.toLowerCase()) {
+                case "help":
+                    outputDiv.innerHTML += `<p>Comandi disponibili:<br>
+                                            - help: Mostra questo messaggio<br>
+                                            - clear: Pulisce lo schermo<br>
+                                            - ls: Mostra l'elenco di file e cartelle<br>
+                                            - echo [testo]: Stampa il testo</p>`;
+                    break;
+                case "clear":
+                    outputDiv.innerHTML = "";
+                    break;
+                case "ls":
+                    outputDiv.innerHTML += `<p>${files.join("  ")}</p>`;
+                    break;
+                default:
+                    if (input.startsWith("echo ")) {
+                        outputDiv.innerHTML += `<p>${input.substring(5)}</p>`;
+                    } else {
+                        outputDiv.innerHTML += `<p>Comando non riconosciuto: ${input}</p>`;
+                    }
+            }
+
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                let terminal = document.getElementById("terminal");
+                terminal.scrollTo({ top: terminal.scrollHeight, behavior: "smooth" });
+
+                // Soluzione extra per dispositivi mobili con problemi di scorrimento
+                setTimeout(() => {
+                    terminal.scrollTo({ top: terminal.scrollHeight, behavior: "smooth" });
+                }, 200);
+            });
+        }
+    </script>
+</body>
+</html>
