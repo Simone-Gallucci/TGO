@@ -65,7 +65,8 @@
         a {
             color: lime;
             text-decoration: none;
-            margin-right: 10px;
+            display: block; /* Forza la visualizzazione uno sotto l'altro */
+            margin-bottom: 3px;
         }
         a:hover {
             text-decoration: underline;
@@ -116,7 +117,7 @@
                     response = `<p>Comandi disponibili:<br>
                                 - help: Mostra questo messaggio<br>
                                 - clear: Pulisce lo schermo<br>
-                                - ls: Mostra l'elenco di file e cartelle (cliccabili in fila)<br>
+                                - ls: Mostra l'elenco di file e cartelle (uno sotto l'altro)<br>
                                 - echo [testo]: Stampa il testo</p>`;
                     break;
                 case "clear":
@@ -125,7 +126,7 @@
                 case "ls":
                     response = "<p>" + files.map(file => 
                         `<a href="${file.url}" target="_blank">${file.name}</a>`
-                    ).join(" ") + "</p>";
+                    ).join("<br>") + "</p>"; // <br> forza la visualizzazione in elenco verticale
                     break;
                 default:
                     if (input.startsWith("echo ")) {
