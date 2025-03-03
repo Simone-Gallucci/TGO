@@ -30,7 +30,7 @@
         }
         #terminal {
             width: 90%;
-            height: 85%;
+            height: 80%;
             display: flex;
             flex-direction: column;
             background-color: black;
@@ -79,6 +79,36 @@
         a:hover {
             text-decoration: underline;
         }
+        #editor {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: lime;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 80%;
+            background: black;
+            color: lime;
+            font-family: monospace;
+            border: none;
+            padding: 5px;
+            resize: none;
+        }
+        button {
+            background: lime;
+            color: black;
+            font-family: monospace;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -94,6 +124,13 @@
         </div>
     </div>
 
+    <div id="editor">
+        <h2 id="editor-title"></h2>
+        <textarea id="editor-content"></textarea>
+        <button onclick="saveFile()">Salva</button>
+        <button onclick="closeEditor()">Chiudi</button>
+    </div>
+
     <script>
         function loadFileSystem() {
             let savedData = localStorage.getItem("fileSystem");
@@ -106,6 +143,7 @@
 
         let fileSystem = loadFileSystem();
         let currentPath = ["/"];
+        let currentEditingFile = null;
 
         function getCurrentFolder() {
             let folder = fileSystem;
@@ -138,23 +176,24 @@
             let args = input.split(" ");
 
             switch (args[0]) {
-                case "help":
-                    response = `<p>Comandi disponibili:<br>
-                                - help: Mostra questo messaggio<br>
-                                - clear: Pulisce lo schermo<br>
-                                - ls: Mostra file e cartelle (cliccabili)<br>
-                                - mkdir [cartella]: Crea una cartella<br>
-                                - cd [cartella]: Entra in una cartella<br>
-                                - cd ..: Torna indietro<br>
-                                - touch [file.txt]: Crea un file di testo<br>
-                                - nano [file.txt]: Modifica un file di testo<br>
-                                - rm [file/cartella]: Elimina file o cartella<br>
-                                - echo [testo]: Stampa il testo</p>`;
+                case "nano":
+                    if (args[1]) {
+                        openEditor(args[1]);
+                        return;
+                    }
                     break;
 
-                case "clear":
-                    outputDiv.innerHTML = "";
-                    return;
+                case "touch":
+                    if (args[1]) {
+                        let fileName = args[1];
+                        let folder = getCurrentFolder();
+                        if (!folder[fileName]) {
+                            folder[fileName] = "";
+                            saveFileSystem();
+                            response = `<p>File '${fileName}' creato.</p>`;
+                        }
+                    }
+                    break;
 
                 case "ls":
                     let currentFolder = getCurrentFolder();
@@ -166,48 +205,36 @@
                     response = `<p>${filesAndFolders}</p>`;
                     break;
 
-                case "mkdir":
-                    if (args.length < 2) {
-                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
-                    } else {
-                        let folderName = args[1].trim();
-                        let folder = getCurrentFolder();
-                        if (!folder[folderName]) {
-                            folder[folderName] = {};
-                            saveFileSystem();
-                            response = `<p>Cartella '${folderName}' creata con successo.</p>`;
-                        } else {
-                            response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
-                        }
-                    }
-                    break;
-
-                case "rm":
-                    if (args.length < 2) {
-                        response = "<p>Errore: Specifica il nome di un file o cartella da eliminare.</p>";
-                    } else {
-                        let itemName = args[1].trim();
-                        let folder = getCurrentFolder();
-                        if (folder[itemName] !== undefined) {
-                            delete folder[itemName];
-                            saveFileSystem();
-                            response = `<p>'${itemName}' eliminato con successo.</p>`;
-                        } else {
-                            response = `<p>Errore: '${itemName}' non esiste.</p>`;
-                        }
-                    }
-                    break;
-
-                case "echo":
-                    response = `<p>${input.substring(5)}</p>`;
-                    break;
-
                 default:
                     response = `<p>Comando non riconosciuto: ${input}</p>`;
             }
 
             outputDiv.innerHTML += commandLine + response + "<hr>";
             scrollToBottom();
+        }
+
+        function openEditor(fileName) {
+            let folder = getCurrentFolder();
+            if (folder[fileName] !== undefined) {
+                currentEditingFile = fileName;
+                document.getElementById("editor-title").innerText = `Modifica: ${fileName}`;
+                document.getElementById("editor-content").value = folder[fileName];
+                document.getElementById("terminal").style.display = "none";
+                document.getElementById("editor").style.display = "block";
+            }
+        }
+
+        function saveFile() {
+            let folder = getCurrentFolder();
+            if (currentEditingFile) {
+                folder[currentEditingFile] = document.getElementById("editor-content").value;
+                saveFileSystem();
+            }
+        }
+
+        function closeEditor() {
+            document.getElementById("editor").style.display = "none";
+            document.getElementById("terminal").style.display = "flex";
         }
 
         function scrollToBottom() {
