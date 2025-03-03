@@ -71,14 +71,6 @@
             min-width: 50px;
             text-transform: lowercase;
         }
-        a {
-            color: lime;
-            text-decoration: none;
-            margin-right: 10px;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -95,126 +87,180 @@
     </div>
 
     <script>
-        function loadFileSystem() {
-            let savedData = localStorage.getItem("fileSystem");
-            return savedData ? JSON.parse(savedData) : {};
-        }
+      function loadFileSystem() {
+    let savedData = localStorage.getItem("fileSystem");
+    let fs = savedData ? JSON.parse(savedData) : {};
+    if (!fs[".segreto.txt"]) {
+        fs[".segreto.txt"] = "Bravo sei riuscito a trovare il file nascosto";
+        saveFileSystem(fs);
+    }
+    return fs;
+}
 
-        function saveFileSystem() {
-            localStorage.setItem("fileSystem", JSON.stringify(fileSystem));
-        }
+function saveFileSystem(fs = fileSystem) {
+    localStorage.setItem("fileSystem", JSON.stringify(fs));
+}
 
-        let fileSystem = loadFileSystem();
-        let currentPath = ["/"];
+let fileSystem = loadFileSystem();
+let currentPath = ["/"];
 
-        function getCurrentFolder() {
-            let folder = fileSystem;
-            for (let i = 1; i < currentPath.length; i++) {
-                folder = folder[currentPath[i]];
+function getCurrentFolder() {
+    let folder = fileSystem;
+    for (let i = 1; i < currentPath.length; i++) {
+        folder = folder[currentPath[i]];
+    }
+    return folder;
+}
+
+function updatePrompt() {
+    document.getElementById("prompt").innerText = `TGO@terminal:${currentPath.join("/")}$`;
+}
+
+const inputField = document.getElementById("cmd");
+const outputDiv = document.getElementById("output");
+const outputContainer = document.getElementById("output-container");
+
+inputField.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        let input = this.value.trim().toLowerCase();
+        this.value = "";
+        executeCommand(input);
+    }
+});
+
+function executeCommand(input) {
+    let commandLine = `<p><span style="color: lime;">TGO@terminal:${currentPath.join("/")}$</span> ${input}</p>`;
+    let response = "";
+    let args = input.split(" ");
+
+    switch (args[0]) {
+        case "ls":
+            let currentFolder = getCurrentFolder();
+            let showHidden = args.length > 1 && args[1] === "-a";
+            let filesAndFolders = Object.keys(currentFolder)
+                .filter(item => showHidden || !item.startsWith("."))
+                .map(item => `<span>${item}</span>`)
+                .join(" ");
+            response = `<p>${filesAndFolders || "Nessun file presente"}</p>`;
+            break;
+
+        case "nano":
+            if (args[1]) {
+                let fileName = args[1];
+                let folder = getCurrentFolder();
+                response = `<p>Contenuto di ${fileName}: ${folder[fileName] || "(vuoto)"}</p>`;
+            } else {
+                response = "<p>Errore: Specifica un file da aprire.</p>";
             }
-            return folder;
-        }
+            break;
 
-        function updatePrompt() {
-            document.getElementById("prompt").innerText = `TGO@terminal:${currentPath.join("/")}$`;
-        }
-
-        const inputField = document.getElementById("cmd");
-        const outputDiv = document.getElementById("output");
-        const outputContainer = document.getElementById("output-container");
-
-        inputField.addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                let input = this.value.trim().toLowerCase();
-                this.value = "";
-                executeCommand(input);
+        case "touch":
+            if (args[1]) {
+                let fileName = args[1];
+                let folder = getCurrentFolder();
+                if (!folder[fileName]) {
+                    folder[fileName] = "";
+                    saveFileSystem();
+                    response = `<p>File '${fileName}' creato.</p>`;
+                } else {
+                    response = `<p>Errore: Il file '${fileName}' esiste già.</p>`;
+                }
+            } else {
+                response = "<p>Errore: Specifica un nome per il file.</p>";
             }
-        });
+            break;
 
-        function executeCommand(input) {
-            let commandLine = `<p><span style="color: lime;">TGO@terminal:${currentPath.join("/")}$</span> ${input}</p>`;
-            let response = "";
-            let args = input.split(" ");
-
-            switch (args[0]) {
-                case "help":
-                    response = `<p>Comandi disponibili:<br>
-                                - help: Mostra questo messaggio<br>
-                                - clear: Pulisce lo schermo<br>
-                                - ls: Mostra file e cartelle<br>
-                                - mkdir [cartella]: Crea una cartella<br>
-                                - cd [cartella]: Entra in una cartella<br>
-                                - cd ..: Torna indietro<br>
-                                - touch [file.txt]: Crea un file di testo<br>
-                                - nano [file.txt]: Modifica un file di testo<br>
-                                - rm [file/cartella]: Elimina file o cartella<br>
-                                - echo [testo]: Stampa il testo</p>`;
-                    break;
-
-                case "clear":
-                    outputDiv.innerHTML = "";
-                    return;
-
-                case "ls":
-                    let currentFolder = getCurrentFolder();
-                    let filesAndFolders = Object.keys(currentFolder)
-                        .map(item => (typeof currentFolder[item] === "string" ? 
-                            `<a href="#">${item}</a>` : 
-                            `<span style="color: cyan;">${item}/</span>`))
-                        .join(" ");
-                    response = `<p>${filesAndFolders}</p>`;
-                    break;
-
-                case "mkdir":
-                    if (args.length < 2) {
-                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
-                    } else {
-                        let folderName = args[1].trim();
-                        let folder = getCurrentFolder();
-                        if (!folder[folderName]) {
-                            folder[folderName] = {};
-                            saveFileSystem();
-                            response = `<p>Cartella '${folderName}' creata con successo.</p>`;
-                        } else {
-                            response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
-                        }
-                    }
-                    break;
-
-                case "rm":
-                    if (args.length < 2) {
-                        response = "<p>Errore: Specifica il nome di un file o cartella da eliminare.</p>";
-                    } else {
-                        let itemName = args[1].trim();
-                        let folder = getCurrentFolder();
-                        if (folder[itemName] !== undefined) {
-                            delete folder[itemName];
-                            saveFileSystem();
-                            response = `<p>'${itemName}' eliminato con successo.</p>`;
-                        } else {
-                            response = `<p>Errore: '${itemName}' non esiste.</p>`;
-                        }
-                    }
-                    break;
-
-                case "echo":
-                    response = `<p>${input.substring(5)}</p>`;
-                    break;
-
-                default:
-                    response = `<p>Comando non riconosciuto: ${input}</p>`;
+        case "rm":
+            if (args.length < 2) {
+                response = "<p>Errore: Specifica un file o cartella da eliminare.</p>";
+            } else {
+                let itemName = args[1];
+                let folder = getCurrentFolder();
+                if (folder[itemName]) {
+                    delete folder[itemName];
+                    saveFileSystem();
+                    response = `<p>'${itemName}' eliminato.</p>`;
+                } else {
+                    response = `<p>Errore: '${itemName}' non esiste.</p>`;
+                }
             }
+            break;
 
-            outputDiv.innerHTML += commandLine + response + "<hr>";
-            scrollToBottom();
-        }
+        case "mkdir":
+            if (args.length < 2) {
+                response = "<p>Errore: Specifica un nome per la cartella.</p>";
+            } else {
+                let folderName = args[1];
+                let folder = getCurrentFolder();
+                if (!folder[folderName]) {
+                    folder[folderName] = {};
+                    saveFileSystem();
+                    response = `<p>Cartella '${folderName}' creata.</p>`;
+                } else {
+                    response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
+                }
+            }
+            break;
 
-        function scrollToBottom() {
-            requestAnimationFrame(() => {
-                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
-            });
-        }
+        case "cd":
+            if (args.length < 2) {
+                response = "<p>Errore: Specifica una cartella.</p>";
+            } else if (args[1] === "..") {
+                if (currentPath.length > 1) {
+                    currentPath.pop();
+                    response = `<p>Tornato alla cartella superiore.</p>`;
+                    updatePrompt();
+                }
+            } else {
+                let folderName = args[1];
+                let folder = getCurrentFolder();
+                if (folder[folderName] && typeof folder[folderName] === "object") {
+                    currentPath.push(folderName);
+                    response = `<p>Entrato in '${folderName}'.</p>`;
+                    updatePrompt();
+                } else {
+                    response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
+                }
+            }
+            break;
+
+        case "clear":
+            outputDiv.innerHTML = "";
+            return;
+
+        case "help":
+            response = `<p>Comandi disponibili:<br>
+                        - help: Mostra questo messaggio<br>
+                        - clear: Pulisce lo schermo<br>
+                        - ls [-a]: Mostra file (con -a include i nascosti)<br>
+                        - mkdir [cartella]: Crea una cartella<br>
+                        - cd [cartella]: Entra in una cartella<br>
+                        - cd ..: Torna indietro<br>
+                        - touch [file.txt]: Crea un file<br>
+                        - nano [file.txt]: Visualizza un file<br>
+                        - rm [file/cartella]: Elimina un file o cartella<br>
+                        - echo [testo]: Stampa testo</p>`;
+            break;
+
+        case "echo":
+            response = `<p>${input.substring(5)}</p>`;
+            break;
+
+        default:
+            response = `<p>Comando non riconosciuto: ${input}</p>`;
+    }
+
+    outputDiv.innerHTML += commandLine + response + "<hr>";
+    scrollToBottom();
+}
+
+function scrollToBottom() {
+    requestAnimationFrame(() => {
+        outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
+    });
+}
+
     </script>
 </body>
 </html>
