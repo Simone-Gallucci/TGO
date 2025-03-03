@@ -56,14 +56,14 @@
             flex-grow: 1;
             outline: none;
             min-width: 50px;
-            text-transform: lowercase; /* Forza la scrittura in minuscolo */
+            text-transform: lowercase;
         }
     </style>
 </head>
 <body>
     <div id="terminal">
         <div id="output-container">
-            <p>Simulazione Terminale <br> Digita "help" per i comandi disponibili</p>
+            <p>Simulazione Terminale - Digita "help" per i comandi disponibili</p>
             <div id="output"></div>
         </div>
         <div id="input-line">
@@ -97,7 +97,7 @@
         });
 
         function executeCommand(input) {
-            let commandLine = `<p><span style="color: lime;"> TGO@terminal:~$</span> ${input}</p>`;
+            let commandLine = `<p><span style="color: lime;">TGO@terminal:~$</span> ${input}</p>`;
             let response = "";
 
             switch (input) {
@@ -130,17 +130,21 @@
         function scrollToBottom() {
             setTimeout(() => {
                 outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
-            }, 100);
+            }, 50);
         }
 
         // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
         window.addEventListener("resize", () => {
             let terminal = document.getElementById("terminal");
-            terminal.style.height = `${window.innerHeight}px`; // Forza il ridimensionamento
+            terminal.style.height = `${window.innerHeight}px`; 
             scrollToBottom();
         });
 
-        // Forza il focus sul campo input quando si clicca nel terminale
+        // Rileva i cambiamenti nell'output e forza lo scroll automatico
+        const observer = new MutationObserver(scrollToBottom);
+        observer.observe(outputDiv, { childList: true });
+
+        // Forza il focus sull'input quando si clicca nel terminale
         document.getElementById("terminal").addEventListener("click", () => {
             inputField.focus();
         });
