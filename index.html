@@ -128,9 +128,14 @@
         }
 
         function scrollToBottom() {
+            requestAnimationFrame(() => {
+                outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
+            });
+
+            // Backup per garantire lo scroll su mobile
             setTimeout(() => {
                 outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
-            }, 50);
+            }, 100);
         }
 
         // Ridimensiona dinamicamente il terminale quando la tastiera si apre su mobile
@@ -140,13 +145,18 @@
             scrollToBottom();
         });
 
-        // Rileva i cambiamenti nell'output e forza lo scroll automatico
+        // Rileva cambiamenti nell'output e forza lo scroll automatico
         const observer = new MutationObserver(scrollToBottom);
         observer.observe(outputDiv, { childList: true });
 
         // Forza il focus sull'input quando si clicca nel terminale
         document.getElementById("terminal").addEventListener("click", () => {
             inputField.focus();
+        });
+
+        // Assicura lo scroll quando l'utente interagisce su dispositivi touch
+        outputContainer.addEventListener("touchmove", () => {
+            scrollToBottom();
         });
     </script>
 </body>
