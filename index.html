@@ -85,16 +85,25 @@
     </div>
 
     <script>
-        let fileSystem = {
-            "documento.txt": "https://tuosito.com/documento.txt",
-            "foto.jpg": "https://tuosito.com/foto.jpg",
-            "script.py": "https://tuosito.com/script.py",
-            "app.js": "https://tuosito.com/app.js",
-            "index.html": "https://tuosito.com/index.html",
-            "stile.css": "https://tuosito.com/stile.css",
-            "progetto": {} // Cartella vuota
-        };
+        // 🔥 Funzione per caricare il filesystem da localStorage
+        function loadFileSystem() {
+            let savedData = localStorage.getItem("fileSystem");
+            return savedData ? JSON.parse(savedData) : {
+                "documento.txt": "https://tuosito.com/documento.txt",
+                "foto.jpg": "https://tuosito.com/foto.jpg",
+                "script.py": "https://tuosito.com/script.py",
+                "app.js": "https://tuosito.com/app.js",
+                "index.html": "https://tuosito.com/index.html",
+                "stile.css": "https://tuosito.com/stile.css"
+            };
+        }
 
+        // 🔥 Funzione per salvare il filesystem in localStorage
+        function saveFileSystem() {
+            localStorage.setItem("fileSystem", JSON.stringify(fileSystem));
+        }
+
+        let fileSystem = loadFileSystem();
         let currentPath = ["/"];
 
         function getCurrentFolder() {
@@ -133,7 +142,7 @@
                                 - help: Mostra questo messaggio<br>
                                 - clear: Pulisce lo schermo<br>
                                 - ls: Mostra l'elenco di file e cartelle (cliccabili)<br>
-                                - mkdir [nome]: Crea una nuova cartella<br>
+                                - mkdir [nome]: Crea una nuova cartella (SALVATA PERMANENTEMENTE!)<br>
                                 - cd [nome]: Entra in una cartella<br>
                                 - cd ..: Torna alla cartella superiore<br>
                                 - echo [testo]: Stampa il testo</p>`;
@@ -162,6 +171,7 @@
                         let folder = getCurrentFolder();
                         if (!folder[folderName]) {
                             folder[folderName] = {};
+                            saveFileSystem();
                             response = `<p>Cartella '${folderName}' creata con successo.</p>`;
                         } else {
                             response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
@@ -214,17 +224,6 @@
                 outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
             });
         }
-
-        window.addEventListener("resize", () => {
-            let terminal = document.getElementById("terminal");
-            terminal.style.height = `${window.innerHeight}px`; 
-            scrollToBottom();
-        });
-
-        document.getElementById("terminal").addEventListener("click", () => {
-            inputField.focus();
-        });
-
     </script>
 </body>
 </html>
