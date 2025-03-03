@@ -175,6 +175,7 @@
                                 - cd ..: Torna indietro<br>
                                 - touch [file.txt]: Crea un file di testo<br>
                                 - nano [file.txt]: Modifica un file di testo<br>
+                                - rm [file/cartella]: Elimina file o cartella<br>
                                 - echo [testo]: Stampa il testo</p>`;
                     break;
 
@@ -218,6 +219,20 @@
                     }
                     break;
 
+                case "rm":
+                    if (args[1]) {
+                        let fileName = args[1];
+                        let folder = getCurrentFolder();
+                        if (folder[fileName] !== undefined) {
+                            delete folder[fileName];
+                            saveFileSystem();
+                            response = `<p>'${fileName}' eliminato.</p>`;
+                        } else {
+                            response = `<p>Errore: '${fileName}' non esiste.</p>`;
+                        }
+                    }
+                    break;
+
                 case "echo":
                     response = `<p>${input.substring(5)}</p>`;
                     break;
@@ -240,14 +255,6 @@
                 document.getElementById("editor-content").value = folder[fileName];
                 document.getElementById("terminal").style.display = "none";
                 document.getElementById("editor").style.display = "block";
-            }
-        }
-
-        function saveFile() {
-            let folder = getCurrentFolder();
-            if (currentEditingFile) {
-                folder[currentEditingFile] = document.getElementById("editor-content").value;
-                saveFileSystem();
             }
         }
 
