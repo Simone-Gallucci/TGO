@@ -226,8 +226,8 @@ function executeCommand(input) {
             break;
 
         case "clear":
-            outputDiv.innerHTML = "";
-            return;
+            document.getElementById("output").innerHTML = ""; // Cancella solo l'output
+            return; // Esce dalla funzione senza aggiungere nuove righe
 
         case "help":
             response = `<p>Comandi disponibili:<br>
