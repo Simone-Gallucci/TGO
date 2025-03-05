@@ -87,180 +87,132 @@
     </div>
 
     <script>
-      function loadFileSystem() {
-    let savedData = localStorage.getItem("fileSystem");
-    let fs = savedData ? JSON.parse(savedData) : {};
-    if (!fs[".segreto.txt"]) {
-        fs[".segreto.txt"] = "Bravo sei riuscito a trovare il file nascosto";
-        saveFileSystem(fs);
-    }
-    return fs;
-}
+        let currentDirectoryHandle = null;
 
-function saveFileSystem(fs = fileSystem) {
-    localStorage.setItem("fileSystem", JSON.stringify(fs));
-}
-
-let fileSystem = loadFileSystem();
-let currentPath = ["/"];
-
-function getCurrentFolder() {
-    let folder = fileSystem;
-    for (let i = 1; i < currentPath.length; i++) {
-        folder = folder[currentPath[i]];
-    }
-    return folder;
-}
-
-function updatePrompt() {
-    document.getElementById("prompt").innerText = `TGO@terminal:${currentPath.join("/")}$`;
-}
-
-const inputField = document.getElementById("cmd");
-const outputDiv = document.getElementById("output");
-const outputContainer = document.getElementById("output-container");
-
-inputField.addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        let input = this.value.trim().toLowerCase();
-        this.value = "";
-        executeCommand(input);
-    }
-});
-
-function executeCommand(input) {
-    let commandLine = `<p><span style="color: lime;">TGO@terminal:${currentPath.join("/")}$</span> ${input}</p>`;
-    let response = "";
-    let args = input.split(" ");
-
-    switch (args[0]) {
-        case "ls":
-            let currentFolder = getCurrentFolder();
-            let showHidden = args.length > 1 && args[1] === "-a";
-            let filesAndFolders = Object.keys(currentFolder)
-                .filter(item => showHidden || !item.startsWith("."))
-                .map(item => `<span>${item}</span>`)
-                .join(" ");
-            response = `<p>${filesAndFolders || "Nessun file presente"}</p>`;
-            break;
-
-        case "nano":
-            if (args[1]) {
-                let fileName = args[1];
-                let folder = getCurrentFolder();
-                response = `<p>Contenuto di ${fileName}: ${folder[fileName] || "(vuoto)"}</p>`;
-            } else {
-                response = "<p>Errore: Specifica un file da aprire.</p>";
+        async function selectDirectory() {
+            try {
+                currentDirectoryHandle = await window.showDirectoryPicker();
+                updatePrompt();
+            } catch (err) {
+                console.error("Errore nell'accesso alla cartella:", err);
             }
-            break;
+        }
 
-        case "touch":
-            if (args[1]) {
-                let fileName = args[1];
-                let folder = getCurrentFolder();
-                if (!folder[fileName]) {
-                    folder[fileName] = "";
-                    saveFileSystem();
-                    response = `<p>File '${fileName}' creato.</p>`;
-                } else {
-                    response = `<p>Errore: Il file '${fileName}' esiste già.</p>`;
-                }
-            } else {
-                response = "<p>Errore: Specifica un nome per il file.</p>";
+        function updatePrompt() {
+            document.getElementById("prompt").innerText = `TGO@terminal:${currentDirectoryHandle ? currentDirectoryHandle.name : "/"}$`;
+        }
+
+        async function executeCommand(input) {
+            let commandLine = `<p><span style="color: lime;">TGO@terminal:${currentDirectoryHandle ? currentDirectoryHandle.name : "/"}$</span> ${input}</p>`;
+            let response = "";
+            let args = input.split(" ");
+
+            switch (args[0]) {
+                case "ls":
+                    if (!currentDirectoryHandle) {
+                        response = "<p>Errore: Seleziona una cartella con il comando `select`.</p>";
+                        break;
+                    }
+                    response = "<p>File e cartelle:<br>";
+                    for await (const [name, entry] of currentDirectoryHandle.entries()) {
+                        response += `${entry.kind === "directory" ? "[DIR] " : ""}${name}<br>`;
+                    }
+                    response += "</p>";
+                    break;
+
+                case "nano":
+                    if (!args[1]) {
+                        response = "<p>Errore: Specifica un file da aprire.</p>";
+                    } else {
+                        const fileHandle = await currentDirectoryHandle.getFileHandle(args[1], { create: true });
+                        const file = await fileHandle.getFile();
+                        const contents = await file.text();
+                        response = `<p>Contenuto di ${args[1]}:<br>${contents || "(vuoto)"}</p>`;
+                    }
+                    break;
+
+                case "touch":
+                    if (!args[1]) {
+                        response = "<p>Errore: Specifica un nome per il file.</p>";
+                    } else {
+                        await currentDirectoryHandle.getFileHandle(args[1], { create: true });
+                        response = `<p>File '${args[1]}' creato.</p>`;
+                    }
+                    break;
+
+                case "rm":
+                    if (!args[1]) {
+                        response = "<p>Errore: Specifica un file da eliminare.</p>";
+                    } else {
+                        await currentDirectoryHandle.removeEntry(args[1]);
+                        response = `<p>'${args[1]}' eliminato.</p>`;
+                    }
+                    break;
+
+                case "mkdir":
+                    if (!args[1]) {
+                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
+                    } else {
+                        await currentDirectoryHandle.getDirectoryHandle(args[1], { create: true });
+                        response = `<p>Cartella '${args[1]}' creata.</p>`;
+                    }
+                    break;
+
+                case "cd":
+                    if (!args[1]) {
+                        response = "<p>Errore: Specifica una cartella.</p>";
+                    } else {
+                        try {
+                            if (args[1] === "..") {
+                                currentDirectoryHandle = await currentDirectoryHandle.getParent();
+                            } else {
+                                currentDirectoryHandle = await currentDirectoryHandle.getDirectoryHandle(args[1]);
+                            }
+                            updatePrompt();
+                        } catch (err) {
+                            response = `<p>Errore: La cartella '${args[1]}' non esiste.</p>`;
+                        }
+                    }
+                    break;
+
+                case "select":
+                    await selectDirectory();
+                    response = "<p>Cartella selezionata con successo.</p>";
+                    break;
+
+                case "clear":
+                    document.getElementById("output").innerHTML = "";
+                    return;
+
+                case "help":
+                    response = `<p>Comandi disponibili:<br>
+                                - help: Mostra questo messaggio<br>
+                                - select: Seleziona una cartella sul sistema<br>
+                                - clear: Pulisce lo schermo<br>
+                                - ls: Mostra file e cartelle<br>
+                                - mkdir [cartella]: Crea una cartella<br>
+                                - cd [cartella]: Entra in una cartella<br>
+                                - cd ..: Torna indietro<br>
+                                - touch [file.txt]: Crea un file<br>
+                                - nano [file.txt]: Visualizza un file<br>
+                                - rm [file/cartella]: Elimina un file o cartella</p>`;
+                    break;
+
+                default:
+                    response = `<p>Comando non riconosciuto: ${input}</p>`;
             }
-            break;
 
-        case "rm":
-            if (args.length < 2) {
-                response = "<p>Errore: Specifica un file o cartella da eliminare.</p>";
-            } else {
-                let itemName = args[1];
-                let folder = getCurrentFolder();
-                if (folder[itemName]) {
-                    delete folder[itemName];
-                    saveFileSystem();
-                    response = `<p>'${itemName}' eliminato.</p>`;
-                } else {
-                    response = `<p>Errore: '${itemName}' non esiste.</p>`;
-                }
+            document.getElementById("output").innerHTML += commandLine + response + "<hr>";
+        }
+
+        document.getElementById("cmd").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                let input = this.value.trim().toLowerCase();
+                this.value = "";
+                executeCommand(input);
             }
-            break;
-
-        case "mkdir":
-            if (args.length < 2) {
-                response = "<p>Errore: Specifica un nome per la cartella.</p>";
-            } else {
-                let folderName = args[1];
-                let folder = getCurrentFolder();
-                if (!folder[folderName]) {
-                    folder[folderName] = {};
-                    saveFileSystem();
-                    response = `<p>Cartella '${folderName}' creata.</p>`;
-                } else {
-                    response = `<p>Errore: La cartella '${folderName}' esiste già.</p>`;
-                }
-            }
-            break;
-
-        case "cd":
-            if (args.length < 2) {
-                response = "<p>Errore: Specifica una cartella.</p>";
-            } else if (args[1] === "..") {
-                if (currentPath.length > 1) {
-                    currentPath.pop();
-                    response = `<p>Tornato alla cartella superiore.</p>`;
-                    updatePrompt();
-                }
-            } else {
-                let folderName = args[1];
-                let folder = getCurrentFolder();
-                if (folder[folderName] && typeof folder[folderName] === "object") {
-                    currentPath.push(folderName);
-                    response = `<p>Entrato in '${folderName}'.</p>`;
-                    updatePrompt();
-                } else {
-                    response = `<p>Errore: La cartella '${folderName}' non esiste.</p>`;
-                }
-            }
-            break;
-
-        case "clear":
-            document.getElementById("output").innerHTML = ""; // Cancella solo l'output
-            return; // Esce dalla funzione senza aggiungere nuove righe
-
-        case "help":
-            response = `<p>Comandi disponibili:<br>
-                        - help: Mostra questo messaggio<br>
-                        - clear: Pulisce lo schermo<br>
-                        - ls [-a]: Mostra file (con -a include i nascosti)<br>
-                        - mkdir [cartella]: Crea una cartella<br>
-                        - cd [cartella]: Entra in una cartella<br>
-                        - cd ..: Torna indietro<br>
-                        - touch [file.txt]: Crea un file<br>
-                        - nano [file.txt]: Visualizza un file<br>
-                        - rm [file/cartella]: Elimina un file o cartella<br>
-                        - echo [testo]: Stampa testo</p>`;
-            break;
-
-        case "echo":
-            response = `<p>${input.substring(5)}</p>`;
-            break;
-
-        default:
-            response = `<p>Comando non riconosciuto: ${input}</p>`;
-    }
-
-    outputDiv.innerHTML += commandLine + response + "<hr>";
-    scrollToBottom();
-}
-
-function scrollToBottom() {
-    requestAnimationFrame(() => {
-        outputContainer.scrollTo({ top: outputContainer.scrollHeight, behavior: "smooth" });
-    });
-}
-
+        });
     </script>
 </body>
 </html>
