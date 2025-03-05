@@ -150,13 +150,17 @@
                     break;
 
                 case "mkdir":
-                    if (!args[1]) {
-                        response = "<p>Errore: Specifica un nome per la cartella.</p>";
-                    } else {
-                        await currentDirectoryHandle.getDirectoryHandle(args[1], { create: true });
-                        response = `<p>Cartella '${args[1]}' creata.</p>`;
-                    }
-                    break;
+            if (!args[1]) {
+                response = "<p>Errore: Specifica un nome per la cartella.</p>";
+            } else {
+                try {
+                    await currentDirectoryHandle.getDirectoryHandle(args[1], { create: true });
+                    response = `<p>Cartella '${args[1]}' creata con successo.</p>`;
+                } catch (err) {
+                    response = `<p>Errore: Impossibile creare la cartella '${args[1]}'.</p>`;
+                }
+            }
+            break;
 
                 case "cd":
                     if (!args[1]) {
